@@ -1,26 +1,25 @@
 <template>
-  <img alt="Vue logo" src="./assets/logo.png">
-  <MainDashboard msg="Welcome to Your Vue.js App"/>
+  <div class="app">
+    <nav-menu/>
+    <router-view />
+  </div>
 </template>
 
 <script>
-import MainDashboard from './components/MainDashboard.vue'
-
+import NavMenu from "./components/NavMenu.vue";
+import {RouterView} from 'vue-router'
 export default {
-  name: 'App',
   components: {
-    MainDashboard
-  }
-}
+    NavMenu,
+    RouterView,
+  },
+  name: "App",
+};
 </script>
 
-<style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+<style scoped>
+.app{
   text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
 }
+
 </style>
