@@ -29,7 +29,7 @@ export default {
 
     const login = async () => {
       try {
-        await store.dispatch('login/login', {
+        await store.dispatch('loginStore/login', {
           email: email.value,
           password: password.value,
         });

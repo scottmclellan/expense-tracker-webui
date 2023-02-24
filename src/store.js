@@ -1,8 +1,10 @@
 import {createStore} from 'vuex'
-import {login} from './components/Login/login'
+import {loginStore} from './components/Login/loginStore'
+import {monthlySummaryStore} from './components/MonthlySummary/monthlySummaryStore'
 
 export const store = createStore({
     modules:{
-        login,
+        loginStore,
+        monthlySummaryStore
     }
 })

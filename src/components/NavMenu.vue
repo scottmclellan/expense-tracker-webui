@@ -25,14 +25,14 @@ export default {
     const router = useRouter();
 
     const logout = async ()=>{
-        await store.dispatch('login/logout')
+        await store.dispatch('loginStore/logout')
 
           // redirect to dashboard on successful logout
           router.push('/');
     }
 
     return {
-      loggedIn: computed(() => store.state.login.loggedIn),
+      loggedIn: computed(() => store.state.loginStore.loggedIn),
       logout
     };
   },
