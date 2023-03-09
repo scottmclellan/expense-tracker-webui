@@ -1,9 +1,10 @@
 import { createRouter, createWebHistory } from "vue-router";
 import MonthlySummary from "./components/MonthlySummary/MonthlySummary.vue";
 import ExpenseUpload from "./components/ExpenseUpload/ExpenseUpload.vue";
-import ExpenseUploadv2 from "./components/ExpenseUpload/ExpenseUploadv2.vue";
 import WelcomeView from "./components/Welcome/WelcomeView.vue";
-import BudgetOverview from "./components/Budget/BudgetOverview.vue";
+import BudgetOverview from "./components/BudgetOverview/BudgetOverview.vue";
+import AccountOverview from "./components/AccountOverview/AccountOverview.vue";
+import AccountEdit from "./components/AccountOverview/AccountEdit.vue";
 import LoginView from "./components/Login/LoginView.vue";
 
 const routes = [
@@ -18,14 +19,22 @@ const routes = [
   {
     path: "/expense-upload",
     component: ExpenseUpload,
-  },  
-  {
-    path: "/expense-upload-v2",
-    component: ExpenseUploadv2,
   },
   {
     path: "/budget-overview",
     component: BudgetOverview,
+  },
+  {
+    path: "/account-overview",
+    component: AccountOverview,
+  },
+  {
+    path: "/account-overview/:id",
+    component: AccountEdit,
+  },
+  {
+    path: "/account-overview/new",
+    component: AccountEdit,
   },
   {
     path: "/login",

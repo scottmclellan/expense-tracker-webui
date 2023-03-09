@@ -1,7 +1,7 @@
 <template>
     <div>
       <h1>{{ title }}</h1>
-      <p>Welcome to my expense tracker site!.</p>
+      <p>For all your ugly budgetting needs.</p>
     </div>
   </template>
   
@@ -10,7 +10,7 @@
     name: 'WelcomeView',
     data() {
       return {
-        title: 'McLellan Family Expense Tracker',
+        title: 'Ugly Budget Expense Tracker',
       };
     },
   };

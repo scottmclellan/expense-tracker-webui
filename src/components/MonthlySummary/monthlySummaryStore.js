@@ -1,3 +1,5 @@
+import { fetchMonthlySummary, fetchCategoryDetails } from "@/utilities/fetch";
+
 export const monthlySummaryStore = {
   namespaced: true,
   state() {
@@ -34,24 +36,20 @@ export const monthlySummaryStore = {
   },
   actions: {
     async fetchMonthlySummary(ctx, { month, year }) {
-      const res = await window.fetch(
-        `http://localhost:3000/api/summary/${year}/${month+1}`
-      );
-      const json = await res.json();
+
+      const json = await fetchMonthlySummary(year, month+1);
+
       ctx.commit("setSummary", json);
       ctx.commit("setCurrentMonth", month);
       ctx.commit("setCurrentYear", year);
     },
     async fetchCategoryDetails(ctx, { categoryId }) {
-      const res = await window.fetch(
-        `http://localhost:3000/api/entry/category/${ctx.state.currentYear}/${ctx.state.currentMonth+1}/${categoryId}`
-      );
+      const json = await fetchCategoryDetails(ctx.state.currentYear, ctx.state.currentMonth +1, categoryId);
 
-      if (res.status === 404) {
+      if (!json) {
         ctx.commit("setSelectedCategoryId", categoryId);
         ctx.commit("setCategoryDetails", undefined);
-      } else {
-        const json = await res.json();
+      } else {      
         ctx.commit("setSelectedCategoryId", categoryId);
         ctx.commit("setCategoryDetails", json);
       }

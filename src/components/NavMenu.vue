@@ -5,6 +5,7 @@
       <li><RouterLink v-if="loggedIn" to="/monthly-summary">Monthly Summary</RouterLink></li>
       <li><RouterLink v-if="loggedIn" to="/expense-upload">Expense Upload</RouterLink></li>
       <li><RouterLink v-if="loggedIn" to="/budget-overview">Budget</RouterLink></li>
+      <li><RouterLink v-if="loggedIn" to="/account-overview">Account Setup</RouterLink></li>
       <li><RouterLink v-if="!loggedIn" to="/login">Login</RouterLink></li>
       <li v-if="loggedIn" @click="logout">Logout</li>
     </ul>

@@ -1,3 +1,5 @@
+import { currentUri } from "@/utilities/fetch";
+
 export const loginStore = {
   namespaced: true,
   state() {
@@ -19,7 +21,7 @@ export const loginStore = {
   actions: {
     async login({ commit }, credentials) {
       // perform authentication request
-      const response = await fetch("http://localhost:3000/api/login", {
+      const response = await fetch(`${currentUri}/api/login`, {
         method: "POST",
         body: JSON.stringify(credentials),
         headers: {
@@ -36,7 +38,7 @@ export const loginStore = {
     },
     async logout(ctx) {
       // perform logout request
-      const response = await fetch("http://localhost:3000/api/logout", {
+      const response = await fetch(`${currentUri}/api/logout`, {
         method: "POST",
         body: JSON.stringify({ email: ctx.state.user.email }),
         headers: {
