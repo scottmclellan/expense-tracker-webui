@@ -28,9 +28,8 @@
             :row="row"
             :categories="categories"
             :payees="payees"
-            :entryUsers="entryUsers"
-            @postExpense="postExpense"
-            @updateExpense="postExpense"
+            :accountId="accountId"
+            :entryUsers="entryUsers"           
           />
         </tbody>
       </table>
@@ -49,7 +48,7 @@ import {
   fetchPayees,
   fetchCategories,
 } from "@/utilities/fetch";
-import { checkExistingEntry, checkExistingPayee, postEntry } from "./api";
+import { checkExistingEntry, checkExistingPayee } from "./api";
 
 export default {
   name: "ExpenseUpload",
@@ -142,11 +141,7 @@ export default {
         isLoading.value = false;
       };
       reader.readAsText(file);
-    };
-
-    const postExpense = async (row) => {
-      postEntry(row, accountId.value);
-    };
+    };   
 
     onBeforeMount(async () => {
       categories.value = await fetchCategories();
@@ -162,8 +157,7 @@ export default {
       categories,
       payees,
       entryUsers,
-      handleFileUpload,
-      postExpense,
+      handleFileUpload,     
       isLoading,
       fileInput,
     };

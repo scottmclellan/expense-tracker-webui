@@ -53,7 +53,8 @@ const postEntry = async (row, accountId) => {
 
     const newPayee = await payeeResponse.json();
 
-    payee_id = newPayee[0].id;
+    row.payee_id = newPayee[0].id;
+    row.payee_system_description = newPayee[0].name;
   }
 
   //are we updating or adding an entry
@@ -62,7 +63,7 @@ const postEntry = async (row, accountId) => {
       method: "POST",
       body: JSON.stringify({
         account_id: accountId,
-        payee_id: payee_id,
+        payee_id: row.payee_id,
         amount: row.amount,
         category_id: row.category,
         entry_date: row.entry_date,
@@ -86,7 +87,7 @@ const postEntry = async (row, accountId) => {
         method: "PUT",
         body: JSON.stringify({
           account_id: accountId,
-          payee_id: payee_id,
+          payee_id: row.payee_id,
           amount: row.amount,
           category_id: row.category,
           entry_date: row.entry_date,
@@ -104,6 +105,8 @@ const postEntry = async (row, accountId) => {
 
     await addEntryUsers(row.entry_users, row.entry_id);
   }
+
+  return row;
 };
 
 module.exports = {
