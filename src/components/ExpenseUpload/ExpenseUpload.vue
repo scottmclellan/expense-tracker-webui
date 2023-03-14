@@ -26,8 +26,7 @@
             v-for="(row, index) in rows"
             :key="index"
             :row="row"
-            :categories="categories"
-            :payees="payees"
+            :categories="categories"           
             :accountId="accountId"
             :entryUsers="entryUsers"           
           />
@@ -38,14 +37,14 @@
 </template>
 
 <script>
-import { ref, onBeforeMount, watch } from "vue";
+import { ref, onMounted, watch } from "vue";
+import { useStore } from "vuex";
 import ExpenseRow from "./ExpenseRow.vue";
 import {
   fetchAccounts,
   fetchAccountUploadConfig,
   fetchEntryUsers,
   fetchEntryUsersForEntry,
-  fetchPayees,
   fetchCategories,
 } from "@/utilities/fetch";
 import { checkExistingEntry, checkExistingPayee } from "./api";
@@ -56,12 +55,12 @@ export default {
     ExpenseRow,
   },
   setup() {
+    const store = useStore();
     const accountId = ref(0);
     const rows = ref([]);
     const categories = ref([]);
     const accounts = ref([]);
     const accountUploadConfig = ref({})
-    const payees = ref([]);
     const entryUsers = ref([]);
     const fileInput = ref(null);
     const isLoading = ref(false);
@@ -143,11 +142,12 @@ export default {
       reader.readAsText(file);
     };   
 
-    onBeforeMount(async () => {
+    onMounted(async () => {
       categories.value = await fetchCategories();
-      accounts.value = await fetchAccounts();
-      payees.value = await fetchPayees();
+      accounts.value = await fetchAccounts();      
       entryUsers.value = await fetchEntryUsers();
+
+      await store.dispatch("payeeStore/fetchPayees");
     });
 
     return {
@@ -155,7 +155,6 @@ export default {
       accounts,
       rows,
       categories,
-      payees,
       entryUsers,
       handleFileUpload,     
       isLoading,

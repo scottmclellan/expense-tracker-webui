@@ -3,8 +3,8 @@
     <td>{{ localRow.entry_date }}</td>
     <td>{{ localRow.payee_bank_description }}</td>
     <td>
-      <div v-if="mode === 'add' || mode === 'edit'">
-        <p>{{ mode === "add" ? "Enter" : "Update" }} payee description</p>
+      <div v-if="mode === MODE.ADD || mode === MODE.EDIT">
+        <p>{{ mode === MODE.ADD ? "Enter" : "Update" }} payee description</p>
         <input type="text" v-model="localRow.payee_system_description" />
         <p>Or select existing payee</p>
         <select v-model="localRow.payee_id" @change="payeeSelected">
@@ -88,9 +88,10 @@
 </template>
 
 <script>
-import { reactive, ref } from "vue";
+import { reactive, ref, computed } from "vue";
+import {useStore} from "vuex";
 import { formatCurrency } from "@/utilities/money";
-import { postEntry } from "./api";
+import { addEntry, addEntryUsers, updateEntry, clearEntryUsers } from "./api";
 import { organizeCategories } from "./helpers";
 
 const MODES = { PRE_EDIT: "preedit", EDIT: "edit", ADD: "add" };
@@ -99,11 +100,12 @@ export default {
   props: {
     row: Object,
     accountId: Number,
-    categories: Array,
-    payees: Array,
+    categories: Array,    
     entryUsers: Array,
   },
   setup(props) {
+    const store = useStore();
+
     const state = reactive({
       row: props.row,
       original_payee_system_description: props.row.payee_system_description,
@@ -131,7 +133,7 @@ export default {
       }
 
       if (row.payee_id > 0) {
-        row.payee_system_description = props.payees.find(
+        row.payee_system_description = store.state.payeeStore.all.find(
           (x) => x.id === row.payee_id
         )?.name;
       }
@@ -145,8 +147,44 @@ export default {
       mode.value = MODES.PRE_EDIT;
     };
 
+    const postEntry = async (row, accountId) => {
+
+  //check if we need to create the payee
+  if (row.payee_id === 0) {
+    const newPayee = await store.dispatch("payeeStore/addPayee", {...row});   
+
+    row.payee_id = newPayee.id;
+    row.payee_system_description = newPayee.name;
+  }
+
+  //are we updating or adding an entry
+  if (row.entry_id === 0) {
+    const newEntry = await addEntry(
+      accountId,
+      row.payee_id,
+      row.amount,
+      row.category,
+      row.entry_date,
+      row.memo,
+      row.entry_users
+    );
+
+    row.entry_id = newEntry.id;
+    
+  } else {
+
+    await updateEntry(row.entry_id, accountId, row.payee_id, row.amount, row.category, row.entry_date, row.memo);    
+    
+    await clearEntryUsers(row.entry_id);
+
+    await addEntryUsers(row.entry_users, row.entry_id);
+  }
+
+  return row;
+};
+
     const payeeSelected = (e) => {
-      var payee = props.payees.find((x) => x.id === parseInt(e.target.value));
+      var payee = store.state.payeeStore.all.find((x) => x.id === parseInt(e.target.value));
       state.row.category = payee.default_category_id;
     };
 
@@ -163,6 +201,7 @@ export default {
     };
 
     return {
+      payees : computed(() => store.getters['payeeStore/sortedAll']),
       MODES,
       localRow: state.row,
       mode,
