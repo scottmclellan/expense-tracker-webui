@@ -1,10 +1,10 @@
 <template>
-  <tr>
+  <tr v-if="!isSplitEntry">
     <td>{{ localRow.entry_date }}</td>
     <td>{{ localRow.payee_bank_description }}</td>
     <td>
-      <div v-if="mode === MODE.ADD || mode === MODE.EDIT">
-        <p>{{ mode === MODE.ADD ? "Enter" : "Update" }} payee description</p>
+      <div v-if="editMode === MODES.ADD || editMode === MODES.EDIT">
+        <p>{{ editMode === MODES.ADD ? "Enter" : "Update" }} payee description</p>
         <input type="text" v-model="localRow.payee_system_description" />
         <p>Or select existing payee</p>
         <select v-model="localRow.payee_id" @change="payeeSelected">
@@ -17,9 +17,10 @@
         {{ row.payee_system_description }}
       </div>
     </td>
-    <td>{{ formatCurrency(localRow.amount) }}</td>
+    <td><p>{{ formatCurrency(localRow.amount) }}</p>
+    <button v-if="editMode === MODES.EDIT || editMode ===MODES.ADD" @click="toggleSplitEntry">Split</button></td>
     <td>
-      <div v-if="mode === MODES.ADD || mode === MODES.EDIT">
+      <div v-if="editMode === MODES.ADD || editMode === MODES.EDIT">
         <label v-for="(entryUser, index) in entryUsers" :key="index">
           <input
             type="checkbox"
@@ -63,23 +64,110 @@
     <td></td>
     <td>
       <el-button
-        v-if="mode === MODES.ADD || mode === MODES.EDIT"
+        v-if="editMode === MODES.ADD || editMode === MODES.EDIT"
         type="primary"
         @click="postExpense(localRow)"
       >
         Post
       </el-button>
       <el-button
-        v-if="mode === MODES.EDIT"
+        v-if="editMode === MODES.EDIT"
         type="primary"
-        @click="cancelEdit()"
+        @click="cancelEdit"
       >
         Cancel
       </el-button>
       <el-button
-        v-if="mode === MODES.PRE_EDIT"
+        v-if="editMode === MODES.PRE_EDIT"
         type="warning"
-        @click="startEdit()"
+        @click="startEdit"
+      >
+        Edit
+      </el-button>
+    </td>
+  </tr>
+  <tr v-else v-for="(localRow, index) in splitEntryRows" :key="index" >
+    <td>{{ localRow.entry_date }}</td>
+    <td>{{ localRow.payee_bank_description }}</td>
+    <td>
+      <div v-if="editMode === MODES.ADD || editMode === MODES.EDIT">
+        <p>{{ editMode === MODES.ADD ? "Enter" : "Update" }} payee description</p>
+        <input type="text" v-model="localRow.payee_system_description" />
+        <p>Or select existing payee</p>
+        <select v-model="localRow.payee_id" @change="payeeSelected">
+          <option v-for="payee in payees" :key="payee.id" :value="payee.id">
+            {{ payee.name }}
+          </option>
+        </select>
+      </div>
+      <div v-else>
+        {{ row.payee_system_description }}
+      </div>
+    </td>
+    <td><input type="text" v-model="localRow.amount" />
+    <button  @click="splitEntryRows.push({...localRow})">Add</button></td>
+    <td>
+      <div v-if="editMode === MODES.ADD || editMode === MODES.EDIT">
+        <label v-for="(entryUser, index) in entryUsers" :key="index">
+          <input
+            type="checkbox"
+            v-model="localRow.entry_users"
+            :value="entryUser.id"
+          />
+          {{ `${entryUser.first_name} ${entryUser.last_name}` }}
+        </label>
+        <el-button type="primary" @click="selectAllUsers">
+          Select All
+        </el-button>
+      </div>
+      <div v-else>
+        <label
+          v-for="(entryUser, index) in entryUsers
+            .filter((x) => localRow.entry_users.includes(x.id))
+            .map(
+              (entry_user, index) =>
+                `${entry_user.first_name} ${entry_user.last_name}${
+                  index === localRow.entry_users.length - 1 ? '' : ', '
+                }`
+            )"
+          :key="index"
+        >
+          {{ entryUser }}
+        </label>
+      </div>
+    </td>
+    <td>
+      <select v-model="localRow.category">
+        <option
+          v-for="category in categoriesOrganized"
+          :key="category.id"
+          :value="category.id"
+          :disabled="!category.canSelect"
+        >
+          {{ category.description }}
+        </option>
+      </select>
+    </td>
+    <td></td>
+    <td>
+      <el-button
+        v-if="editMode === MODES.ADD || editMode === MODES.EDIT"
+        type="primary"
+        @click="postExpense(localRow)"
+      >
+        Post
+      </el-button>
+      <el-button
+        v-if="editMode === MODES.EDIT"
+        type="primary"
+        @click="cancelEdit"
+      >
+        Cancel
+      </el-button>
+      <el-button
+        v-if="editMode === MODES.PRE_EDIT"
+        type="warning"
+        @click="startEdit"
       >
         Edit
       </el-button>
@@ -107,15 +195,17 @@ export default {
     const store = useStore();
 
     const state = reactive({
-      row: props.row,
+      row : props.row,
+      rows: [props.row],
       original_payee_system_description: props.row.payee_system_description,
     });
-    const mode = ref("");
+    const editMode = ref("");
+    const isSplitEntry =ref(false);
 
     if (state.row.entry_id === 0) {
-      mode.value = MODES.ADD;
+      editMode.value = MODES.ADD;
     } else {
-      mode.value = MODES.PRE_EDIT;
+      editMode.value = MODES.PRE_EDIT;
     }
 
     let categoriesOrganized = [];
@@ -139,12 +229,12 @@ export default {
       }
 
       state.row = await postEntry(row, props.accountId);
-      mode.value = MODES.PRE_EDIT;
+      editMode.value = MODES.PRE_EDIT;
     };
 
     const updateExpense = async (row) => {
       state.row = await postEntry(row, props.accountId);
-      mode.value = MODES.PRE_EDIT;
+      editMode.value = MODES.PRE_EDIT;
     };
 
     const postEntry = async (row, accountId) => {
@@ -193,18 +283,24 @@ export default {
     };
 
     const cancelEdit = () => {
-      mode.value = "preedit";
+      editMode.value = MODES.PRE_EDIT;
     };
 
     const startEdit = () => {
-      mode.value = "edit";
+      editMode.value = MODES.EDIT;
     };
+
+    const toggleSplitEntry =()=>{
+      isSplitEntry.value = !isSplitEntry.value;
+    }
 
     return {
       payees : computed(() => store.getters['payeeStore/sortedAll']),
       MODES,
       localRow: state.row,
-      mode,
+      splitEntryRows : state.rows,
+      editMode,
+      isSplitEntry,
       categoriesOrganized,
       formatCurrency,
       postExpense,
@@ -213,6 +309,7 @@ export default {
       cancelEdit,
       startEdit,
       selectAllUsers,
+      toggleSplitEntry
     };
   },
 };
