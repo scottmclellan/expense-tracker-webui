@@ -89,7 +89,7 @@ const fetchPayeeByBankDescription = async (payee) => {
 
 const searchEntry = async (entry_date, amount, payee) => {
   const response = await fetch(
-    `${currentUri}/api/entry/search/${encodeURIComponent(
+    `${currentUri}/api/bankentry/search/${encodeURIComponent(
       entry_date
     )}&${encodeURIComponent(amount)}&${encodeURIComponent(payee)}`
   );

@@ -2,7 +2,7 @@ import {
   fetchPayeeByBankDescription,
   searchEntry,
   currentUri,
-} from "@/utilities/fetch"
+} from "./fetch"
 
 
 export const checkExistingPayee = async (payee) => {
@@ -67,7 +67,7 @@ export const addPayee = async (
 };
 
 export const addEntry = async (
-  accountId,
+  bank_entry_id,
   payee_id,
   amount,
   category_id,
@@ -78,7 +78,7 @@ export const addEntry = async (
   const entryResponse = await fetch(`${currentUri}/api/entry/`, {
     method: "POST",
     body: JSON.stringify({
-      account_id: accountId,
+      bank_entry_id: bank_entry_id,
       payee_id: payee_id,
       amount: amount,
       category_id: category_id,
@@ -96,7 +96,7 @@ export const addEntry = async (
 
 export const updateEntry = async (
   entry_id,
-  accountId,
+  bank_entry_id,
   payee_id,
   amount,
   category_id,
@@ -106,7 +106,7 @@ export const updateEntry = async (
   const entryResponse = await fetch(`${currentUri}/api/entry/${entry_id}`, {
     method: "PUT",
     body: JSON.stringify({
-      account_id: accountId,
+      bank_entry_id: bank_entry_id,
       payee_id: payee_id,
       amount: amount,
       category_id: category_id,

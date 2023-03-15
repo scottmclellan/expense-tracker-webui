@@ -47,7 +47,7 @@ import {
   fetchEntryUsersForEntry,
   fetchCategories,
 } from "@/utilities/fetch";
-import { checkExistingEntry, checkExistingPayee } from "./api";
+import { checkExistingEntry, checkExistingPayee } from "@/utilities/api";
 
 export default {
   name: "ExpenseUpload",

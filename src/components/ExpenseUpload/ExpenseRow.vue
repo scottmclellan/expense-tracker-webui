@@ -179,7 +179,7 @@
 import { reactive, ref, computed } from "vue";
 import {useStore} from "vuex";
 import { formatCurrency } from "@/utilities/money";
-import { addEntry, addEntryUsers, updateEntry, clearEntryUsers } from "./api";
+import { addEntry, addEntryUsers, updateEntry, clearEntryUsers } from "../../utilities/api";
 import { organizeCategories } from "./helpers";
 
 const MODES = { PRE_EDIT: "preedit", EDIT: "edit", ADD: "add" };
