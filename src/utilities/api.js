@@ -94,6 +94,28 @@ export const addEntry = async (
   return entryJson[0];
 };
 
+export const addBankEntry = async (
+  account_id,
+  entry_date,
+  amount,
+  payee_name, 
+) => {
+  const entryResponse = await fetch(`${currentUri}/api/bankentry/`, {
+    method: "POST",
+    body: JSON.stringify({
+      account_id: account_id,
+      entry_date:entry_date,
+      amount:amount,
+      payee_name: payee_name, 
+    }),
+    headers: { "Content-Type": "application/json" },
+  });
+
+  const entryJson = await entryResponse.json();
+
+  return entryJson[0];
+};
+
 export const updateEntry = async (
   entry_id,
   bank_entry_id,

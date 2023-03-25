@@ -16,19 +16,23 @@
             <th>Bank Payee</th>
             <th>System Payee</th>
             <th>Amount</th>
-            <th>Entry For</th>           
+            <th>Entry For</th>
             <th>Category</th>
             <th>Action</th>
           </tr>
         </thead>
         <tbody>
-          <ExpenseRow
-            v-for="(row, index) in rows"
+          <!-- <ExpenseRow
+            v-for="(bank_entry, index) in bank_entries"
             :key="index"
-            :row="row"
-            :categories="categories"           
+            :bank_entry="bank_entry"           
             :accountId="accountId"
-            :entryUsers="entryUsers"           
+          /> -->
+          <ExpenseRowMaster
+            v-for="(bank_entry, index) in bank_entries"
+            :key="index"
+            :bank_entry="bank_entry"
+            :accountId="accountId"
           />
         </tbody>
       </table>
@@ -39,48 +43,41 @@
 <script>
 import { ref, onMounted, watch } from "vue";
 import { useStore } from "vuex";
-import ExpenseRow from "./ExpenseRow.vue";
-import {
-  fetchAccounts,
-  fetchAccountUploadConfig,
-  fetchEntryUsers,
-  fetchEntryUsersForEntry,
-  fetchCategories,
-} from "@/utilities/fetch";
+// import ExpenseRow from "./ExpenseRow.vue";
+import ExpenseRowMaster from "./ExpenseRowMaster.vue";
+import { fetchAccounts, fetchAccountUploadConfig } from "@/utilities/fetch";
 import { checkExistingEntry, checkExistingPayee } from "@/utilities/api";
 
 export default {
   name: "ExpenseUpload",
   components: {
-    ExpenseRow,
+    ExpenseRowMaster,
   },
   setup() {
     const store = useStore();
     const accountId = ref(0);
-    const rows = ref([]);
-    const categories = ref([]);
+    const bank_entries = ref([]);
     const accounts = ref([]);
-    const accountUploadConfig = ref({})
-    const entryUsers = ref([]);
+    const accountUploadConfig = ref({});
     const fileInput = ref(null);
     const isLoading = ref(false);
 
-    watch(()=>accountId.value, async (newValue)=>{
+    watch(
+      () => accountId.value,
+      async (newValue) => {
+        //clear the entry rows
+        bank_entries.value = [];
 
-      //clear the entry rows
-      rows.value = [];
+        //clear upload file
+        fileInput.value.value = "";
 
-      //clear upload file
-      fileInput.value.value = "";
-   
-      //retrieve account upload config
-      const uploadConfig = await fetchAccountUploadConfig(newValue);
+        //retrieve account upload config
+        const uploadConfig = await fetchAccountUploadConfig(newValue);
         if (uploadConfig) accountUploadConfig.value = uploadConfig[0];
-    })
+      }
+    );
 
     const handleFileUpload = (event) => {
-
-
       const file = event.target.files[0];
 
       isLoading.value = true;
@@ -91,11 +88,24 @@ export default {
         const data = text
           .split("\n")
           .map((row) => row.split(","))
+          .map((row) =>
+            row.map((value) => {
+              const firstChar = value.charAt(0);
+              const lastChar = value.charAt(value.length - 1);
+              if (
+                firstChar === lastChar &&
+                !firstChar.match(/^[a-zA-Z0-9]+$/) &&
+                !lastChar.match(/^[a-zA-Z0-9]+$/)
+              ) {
+                return value.slice(1, -1).trim();
+              }
+              return value;
+            })
+          )
           .filter((row) => row.length > 1);
 
-        rows.value = await Promise.all(
+        bank_entries.value = await Promise.all(
           data.map(async (row) => {
-
             const entry_date = row[accountUploadConfig.value.entry_date_index];
             const amount = row[accountUploadConfig.value.amount_index];
             const payee = row[accountUploadConfig.value.payee_name_index];
@@ -107,32 +117,37 @@ export default {
             );
 
             if (entryResult && entryResult.id > 0) {
-
-              const entryUsers = await fetchEntryUsersForEntry(entryResult.id);
-             
               return {
-                entry_id: entryResult.id,
-                entry_date,
-                payee_id: entryResult.payee_id,
-                payee_system_description: entryResult.payee_name,
-                payee_bank_description: payee,
+                account_id: entryResult.account_id,
+                bank_entry_id: entryResult.id,
+                entry_date: entryResult.entry_date,
+                payee_name: entryResult.payee_name,
                 amount: entryResult.amount,
-                category: entryResult.category_id,
-                entry_users: entryUsers && entryUsers.length > 0 ? entryUsers.map(user => user.id) : []
+                entries: entryResult.entries,
               };
             } else {
-             
               const payeeResult = await checkExistingPayee(payee);
 
               return {
-                entry_id: 0,
-                entry_date,
-                payee_id: payeeResult.id ?? 0,
-                payee_system_description: payeeResult.name ?? payee,
-                payee_bank_description: payee,
-                amount: amount * -1,
-                category: payeeResult.default_category_id,
-                entry_users: []
+                bank_entry_id: 0,
+                account_id: accountId.value,
+                entry_date: entry_date,
+                payee_name: payee,
+                amount: amount,
+                entries: [
+                  {
+                    entry_id: 0,                    
+                    payee: {
+                      payee_id: payeeResult.id ?? 0,
+                      payee_system_description: payeeResult.name ?? payee,
+                      payee_bank_description: payee,
+                    },
+                    entry_date: entry_date,
+                    amount: amount * -1,
+                    category: payeeResult.default_category_id,
+                    entry_users: [],
+                  },
+                ],
               };
             }
           })
@@ -140,23 +155,20 @@ export default {
         isLoading.value = false;
       };
       reader.readAsText(file);
-    };   
+    };
 
     onMounted(async () => {
-      categories.value = await fetchCategories();
-      accounts.value = await fetchAccounts();      
-      entryUsers.value = await fetchEntryUsers();
-
+      accounts.value = await fetchAccounts();
       await store.dispatch("payeeStore/fetchPayees");
+      await store.dispatch("categoryStore/fetchCategories");
+      await store.dispatch("entryUsersStore/fetchEntryUsers");
     });
 
     return {
       accountId,
       accounts,
-      rows,
-      categories,
-      entryUsers,
-      handleFileUpload,     
+      bank_entries,
+      handleFileUpload,
       isLoading,
       fileInput,
     };

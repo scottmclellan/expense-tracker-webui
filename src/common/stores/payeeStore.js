@@ -1,5 +1,5 @@
 import { fetchPayees } from "@/utilities/fetch";
-import { addPayee } from "../../utilities/api";
+import { addPayee } from "@/utilities/api";
 
 export const payeeStore = {
   namespaced: true,

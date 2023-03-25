@@ -1,12 +1,16 @@
 import {createStore} from 'vuex'
 import {loginStore} from './components/Login/loginStore'
 import {monthlySummaryStore} from './components/MonthlySummary/monthlySummaryStore'
-import { payeeStore } from './components/ExpenseUpload/payeeStore'
+import { payeeStore } from './common/stores/payeeStore'
+import { categoryStore } from './common/stores/categoryStore'
+import { entryUsersStore } from './common/stores/entryUsersStore'
 
 export const store = createStore({
     modules:{
         loginStore,
         monthlySummaryStore,
-        payeeStore
+        payeeStore,
+        entryUsersStore,
+        categoryStore
     }
 })
