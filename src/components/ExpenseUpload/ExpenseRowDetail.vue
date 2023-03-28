@@ -1,34 +1,34 @@
 <template>
-  <tr v-if="!isSplitEntry">
-    <td>{{ localRow.entry_date }}</td>
-    <td>{{ localRow.payee.payee_bank_description }}</td>
+  <tr>
+    <td>{{ state.entry.entry_date }}</td>
+    <td>{{ state.entry.payee.payee_bank_description }}</td>
     <td>
       <ExpenseRowPayee
         v-if="editMode === MODES.ADD || editMode === MODES.EDIT"
-        :payee="localRow.payee"
+        :payee="state.entry.payee"
         @payeeUpdated="payeeUpdated"
       />
       <div v-else>
-        {{ localRow.payee.payee_system_description }}
+        {{ state.entry.payee.payee_system_description }}
       </div>
     </td>
     <td>
-      <MoneyInput v-model="localRow.amount" />
+      <MoneyInput v-model="state.entry.amount" />
     </td>
     <td>
       <ExpenseRowEntryUsers
         v-if="editMode === MODES.ADD || editMode === MODES.EDIT"
-        :entry_users="localRow.entry_users"
+        :entry_users="state.entry.entry_users"
         @entryUsersChanged="entryUsersChanged"
       />
       <div v-else>
         <label
           v-for="(entryUser, index) in entryUsers
-            .filter((x) => localRow.entry_users.includes(x.id))
+            .filter((x) => state.entry.entry_users.includes(x.id))
             .map(
               (entry_user, index) =>
                 `${entry_user.first_name} ${entry_user.last_name}${
-                  index === localRow.entry_users.length - 1 ? '' : ', '
+                  index === state.entry.entry_users.length - 1 ? '' : ', '
                 }`
             )"
           :key="index"
@@ -38,16 +38,10 @@
       </div>
     </td>
     <td>
-      <select v-model="localRow.category">
-        <option
-          v-for="category in categoriesOrganized"
-          :key="category.id"
-          :value="category.id"
-          :disabled="!category.canSelect"
-        >
-          {{ category.description }}
-        </option>
-      </select>
+      <ExpenseRowCategory
+        :category="state.entry.category"
+        @categoryChanged="categoryChanged"
+      />     
     </td>
     <td>
       <el-button type="warning" @click="deleteEntry"> Delete </el-button>
@@ -58,6 +52,7 @@
 <script>
 import ExpenseRowEntryUsers from "./ExpenseRowEntryUsers.vue";
 import ExpenseRowPayee from "./ExpenseRowPayee.vue";
+import ExpenseRowCategory from "./ExpenseRowCategory.vue";
 import MoneyInput from "../Common/MoneyInput.vue";
 import { reactive, ref, computed, watch } from "vue";
 import { useStore } from "vuex";
@@ -99,11 +94,19 @@ export default {
       { deep: true }
     );
 
-    const payeeSelected = (e) => {
+    const entryUsersChanged = (e) => {
+      state.entry.entry_users = e.selected;
+    };
+    const categoryChanged = (e) => {
+      state.entry.category = e.selected;
+    };
+
+    const payeeUpdated = (e) => {
+      state.entry.payee = e;
       var payee = store.state.payeeStore.all.find(
-        (x) => x.id === parseInt(e.target.value)
+        (x) => x.id === parseInt(e.payee_id)
       );
-      state.row.category = payee.default_category_id;
+      state.entry.category = payee.default_category_id;
     };
 
     const deleteEntry = () => {
@@ -112,17 +115,19 @@ export default {
 
     return {
       MODES,
-      localRow: computed(() => state.entry),
+      state,
       editMode,
       categoriesOrganized: computed(
         () => store.getters["categoryStore/organized"]
       ),
       formatCurrency,
-      payeeSelected,
+      payeeUpdated,
+      categoryChanged,
+      entryUsersChanged,
       deleteEntry,
     };
   },
-  components: { ExpenseRowEntryUsers, ExpenseRowPayee, MoneyInput },
+  components: { ExpenseRowEntryUsers, ExpenseRowPayee, ExpenseRowCategory, MoneyInput },
 };
 </script>
 

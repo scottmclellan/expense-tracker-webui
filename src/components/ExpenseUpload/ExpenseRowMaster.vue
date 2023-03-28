@@ -9,7 +9,7 @@
         @payeeUpdated="payeeUpdated"
       />
       <div v-else>
-        {{ localRow.payee_system_description }}
+        {{ localRow.payee.payee_system_description }}
       </div>
     </td>
     <td>
@@ -153,7 +153,7 @@ export default {
       let bank_entry = state.bank_entry;
       //create bank_entry
       if(state.bank_entry.bank_entry_id ===0){
-        bank_entry = await addBankEntry(bank_entry.account_id, bank_entry.entry_date, bank_entry.amount, bank_entry.payee_name);
+        bank_entry = await addBankEntry(bank_entry.account_id, bank_entry.entry_date, bank_entry.amount * -1, bank_entry.payee_name);
 
         bank_entry.bank_entry_id = bank_entry.id;
       }
@@ -165,22 +165,28 @@ export default {
 
         //user changed the payee for the row
         if (
-          row.payee_system_description !=
+          row.payee.payee_system_description !=
             state.original_payee_system_description &&
-          row.payee_id > 0
+          row.payee.payee_id > 0
         ) {
-          row.payee_id = 0;
+          row.payee.payee_id = 0;
         }
-        if (row.payee_id > 0) {
-          row.payee_system_description = store.state.payeeStore.all.find(
-            (x) => x.id === row.payee_id
+        if (row.payee.payee_id > 0) {
+          row.payee.payee_system_description = store.state.payeeStore.all.find(
+            (x) => x.id === row.payee.payee_id
           )?.name;
         }
         state.entries[0] = await postEntry(row, bank_entry.account_id);
         editMode.value = MODES.PRE_EDIT;
       });
 
+      try{
       await Promise.all(postExpensePromises);
+      }
+      catch(error)
+      {
+        console.log(error)
+      }
     };
 
     const updateExpense = async (row) => {
@@ -190,7 +196,7 @@ export default {
 
     const postEntry = async (row, accountId) => {
       //check if we need to create the payee
-      if (row.payee_id === 0) {
+      if (row.payee.payee_id === 0) {
         const newPayee = await store.dispatch("payeeStore/addPayee", {
           ...row.payee,
         });
@@ -198,7 +204,7 @@ export default {
         row.payee.payee_system_description = newPayee.name;
       }
       //are we updating or adding an entry
-      if (row.entry_id === 0) {
+      if (!row.entry_id || row.entry_id === 0) {
         const newEntry = await addEntry(
           row.bank_entry_id,
           row.payee.payee_id,

@@ -1,22 +1,25 @@
 <template>
-  <div>
+  <div v-if="useExistingPayee">
+    <select v-model="localPayee.payee_id" @change="payeeSelected">
+      <option v-for="payee in payees" :key="payee.id" :value="payee.id">
+        {{ payee.name }}
+      </option>
+    </select>
+    <el-button type="primary" @click="useExistingPayee = !useExistingPayee"> Add Payee </el-button>
+  </div>  
+  <div v-else>
     <p>Enter payee description</p>
     <input
       type="text"
       :value="localPayee.payee_system_description"
       @change="payeeSystemDescriptionChanged"
     />
-    <p>Or select existing payee</p>
-    <select v-model="localPayee.payee_id" @change="payeeSelected">
-      <option v-for="payee in payees" :key="payee.id" :value="payee.id">
-        {{ payee.name }}
-      </option>
-    </select>
+    <el-button type="primary" @click="useExistingPayee = !useExistingPayee"> Select Existing </el-button>   
   </div>
 </template>
 
 <script>
-import { reactive, computed } from "vue";
+import { reactive, computed, ref } from "vue";
 import { useStore } from "vuex";
 
 export default {
@@ -27,6 +30,10 @@ export default {
     const store = useStore();
 
     const localPayee = reactive({ ...props.payee });
+
+    const useExistingPayee = ref(false) 
+
+    useExistingPayee.value = localPayee.payee_id && localPayee.payee_id > 0;
 
     const payeeSystemDescriptionChanged = () => {
       emit("payeeUpdated", {
@@ -47,6 +54,7 @@ export default {
     };
 
     return {
+      useExistingPayee,
       localPayee,
       payees: computed(() => store.getters["payeeStore/sortedAll"]),
       payeeSystemDescriptionChanged,
