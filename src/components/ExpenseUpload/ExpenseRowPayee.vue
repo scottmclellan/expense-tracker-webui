@@ -1,25 +1,24 @@
 <template>
-  <div v-if="useExistingPayee">
-    <select v-model="localPayee.payee_id" @change="payeeSelected">
-      <option v-for="payee in payees" :key="payee.id" :value="payee.id">
-        {{ payee.name }}
-      </option>
-    </select>
-    <el-button type="primary" @click="useExistingPayee = !useExistingPayee"> Add Payee </el-button>
-  </div>  
-  <div v-else>
-    <p>Enter payee description</p>
-    <input
-      type="text"
-      :value="localPayee.payee_system_description"
-      @change="payeeSystemDescriptionChanged"
-    />
-    <el-button type="primary" @click="useExistingPayee = !useExistingPayee"> Select Existing </el-button>   
+  <div>
+    <el-autocomplete
+      v-model="localPayeeDescription"
+      :fetch-suggestions="querySearch"
+      :class="{
+        'existing-payee': localPayee.payee_id && localPayee.payee_id > 0,
+        'new-payee': !localPayee.payee_id || localPayee.payee_id <= 0,
+      }"
+      placeholder="Enter payee description or select existing"
+      @select="handleSelect"
+    >
+      <template #default="{ item }">
+        <div class="name">{{ item.name }}</div>
+      </template>
+    </el-autocomplete>
   </div>
 </template>
 
 <script>
-import { reactive, computed, ref } from "vue";
+import { reactive, ref, watch } from "vue";
 import { useStore } from "vuex";
 
 export default {
@@ -30,38 +29,84 @@ export default {
     const store = useStore();
 
     const localPayee = reactive({ ...props.payee });
+    const localPayeeDescription = ref(
+      localPayee.payee_system_description || ""
+    );
 
-    const useExistingPayee = ref(false) 
+    const querySearch = (queryString, callback) => {
+      callback(findPayee(queryString));
+    };
 
-    useExistingPayee.value = localPayee.payee_id && localPayee.payee_id > 0;
-
-    const payeeSystemDescriptionChanged = () => {
-      emit("payeeUpdated", {
-        ...localPayee,
-        payee_id: 0,
+    const findPayee = (queryString) => {
+      return store.getters["payeeStore/sortedAll"].filter((payee) => {
+        return payee.name.toLowerCase().includes(queryString.toLowerCase());
       });
     };
 
-    const payeeSelected = (e) => {
-      const selectedOption = e.target.options[e.target.selectedIndex];
-      const value = selectedOption.value;
-      const text = selectedOption.text;
-      emit("payeeUpdated", {
-        ...localPayee,
-        payee_system_description: text,
-        payee_id: value,
+    const findPayeeExactMatch = (queryString) => {
+      return store.getters["payeeStore/sortedAll"].filter((payee) => {
+        return payee.name.toLowerCase() === queryString.toLowerCase();
       });
     };
+
+    const handleSelect = (item) => {
+      localPayeeDescription.value = item.name;
+      localPayee.payee_system_description = item.name;
+      localPayee.payee_id = item.id;
+
+      emit("payeeUpdated", {
+        ...localPayee,
+        payee_system_description: item.name,
+        payee_id: item.id,
+      });
+    };
+
+    watch(
+      () => localPayeeDescription.value,
+      (newValue, oldValue) => {
+        if (newValue === oldValue) return;
+
+        localPayee.payee_system_description = newValue;
+
+        const result = findPayeeExactMatch(newValue);
+
+        if (result && result.length === 1) {
+          console.log(result)
+          localPayee.payee_id = result[0].id;
+          localPayee.payee_system_description = localPayeeDescription.value = result[0].name;
+
+          emit("payeeUpdated", {
+            ...localPayee,
+          });
+        }
+        else{
+          emit("payeeUpdated", {
+            ...localPayee,
+            payee_id:0,
+            payee_system_description : newValue
+          })
+        }
+      }
+    );
 
     return {
-      useExistingPayee,
       localPayee,
-      payees: computed(() => store.getters["payeeStore/sortedAll"]),
-      payeeSystemDescriptionChanged,
-      payeeSelected,
+      localPayeeDescription,
+      querySearch,
+      handleSelect,
     };
   },
 };
 </script>
 
-<style scoped></style>
+<style scoped>
+.existing-payee .el-input__inner {
+  background-color: lightgreen;
+  color: darkgreen;
+}
+
+.new-payee .el-input__inner {
+  background-color: lightyellow;
+  color: darkgoldenrod;
+}
+</style>

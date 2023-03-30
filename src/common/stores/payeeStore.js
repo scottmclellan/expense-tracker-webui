@@ -10,12 +10,17 @@ export const payeeStore = {
   },
   getters:{
     sortedAll: state => {
-      return state.all.sort((a, b) => a.name.localeCompare(b.name));
+      if(state.all && state.all.length > 0){
+        return state.all.sort((a, b) => a.name.localeCompare(b.name));
+      }
+      else{
+        return [];
+      }
     },
   },
   mutations: {
     setPayees(state, payees) {
-      state.all = payees;
+      state.all = payees ?? [];
     },
     addPayee(state, payee) {
       state.all.push(payee);

@@ -50,16 +50,6 @@
       <el-button
         v-if="
           (editMode === MODES.ADD || editMode === MODES.EDIT) &&
-          splitEntryRows.length > 0
-        "
-        type="primary"
-        @click="addDetailRow"
-      >
-        Add
-      </el-button>
-      <el-button
-        v-if="
-          (editMode === MODES.ADD || editMode === MODES.EDIT) &&
           splitEntryRows.length === 0
         "
         type="primary"
@@ -100,6 +90,16 @@
     @changed="detailRowChanged"
     @deleteEntry="deleteDetailRow"
   />
+  <tr v-if="splitEntryRows && splitEntryRows.length > 0">
+    <td colspan="7">
+      <el-button      
+        type="primary"
+        @click="addDetailRow"
+      >
+        Add New Entry
+      </el-button>
+    </td>
+  </tr>
 </template>
 
 <script>
@@ -149,18 +149,20 @@ export default {
 
     //create expense entry
     const postExpense = async () => {
-
       let bank_entry = state.bank_entry;
       //create bank_entry
-      if(state.bank_entry.bank_entry_id ===0){
-        bank_entry = await addBankEntry(bank_entry.account_id, bank_entry.entry_date, bank_entry.amount * -1, bank_entry.payee_name);
+      if (state.bank_entry.bank_entry_id === 0) {
+        bank_entry = await addBankEntry(
+          bank_entry.account_id,
+          bank_entry.entry_date,
+          bank_entry.amount * -1,
+          bank_entry.payee_name
+        );
 
         bank_entry.bank_entry_id = bank_entry.id;
       }
 
-
       const postExpensePromises = state.entries.forEach(async (row) => {
-
         row.bank_entry_id = bank_entry.id;
 
         //user changed the payee for the row
@@ -180,12 +182,10 @@ export default {
         editMode.value = MODES.PRE_EDIT;
       });
 
-      try{
-      await Promise.all(postExpensePromises);
-      }
-      catch(error)
-      {
-        console.log(error)
+      try {
+        await Promise.all(postExpensePromises);
+      } catch (error) {
+        console.log(error);
       }
     };
 
@@ -239,10 +239,15 @@ export default {
     };
     const payeeUpdated = (e) => {
       state.entries[0].payee = e;
-      var payee = store.state.payeeStore.all.find(
-        (x) => x.id === parseInt(e.payee_id)
-      );
-      state.entries[0].category = payee.default_category_id;
+
+      if (e.payee_id && e.payee_id > 0) {
+        var payee = store.state.payeeStore.all.find(
+          (x) => x.id === parseInt(e.payee_id)
+        );
+        state.entries[0].category = payee.default_category_id;
+      } else {
+        state.entries[0].category = null;
+      }
     };
     const addDetailRow = () => {
       state.entries.push({ ...state.entries[0] });
@@ -250,9 +255,9 @@ export default {
     const deleteDetailRow = (e) => {
       state.entries.splice(e.index, 1);
     };
-    const detailRowChanged = (e) =>{
+    const detailRowChanged = (e) => {
       state.entries[e.index] = e.entry;
-    }
+    };
     const splitEntry = () => {
       addDetailRow();
     };

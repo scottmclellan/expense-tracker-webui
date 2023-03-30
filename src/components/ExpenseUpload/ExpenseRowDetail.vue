@@ -1,7 +1,7 @@
 <template>
   <tr>
-    <td>{{ state.entry.entry_date }}</td>
-    <td>{{ state.entry.payee.payee_bank_description }}</td>
+    <td></td>
+    <td></td>
     <td>
       <ExpenseRowPayee
         v-if="editMode === MODES.ADD || editMode === MODES.EDIT"
