@@ -1,7 +1,7 @@
 <template>
     <div>
       <h1>{{ title }}</h1>
-      <p>For all your ugly budgetting needs.</p>
+      <p>For all your ugly budgeting needs.</p>
     </div>
   </template>
   
