@@ -25,7 +25,6 @@ export default {
     const password = ref('');
     const router = useRouter();
 
-    console.log(store)
 
     const login = async () => {
       try {
