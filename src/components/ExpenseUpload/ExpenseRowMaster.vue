@@ -109,7 +109,9 @@ import ExpenseRowPayee from "./ExpenseRowPayee.vue";
 import ExpenseRowCategory from "./ExpenseRowCategory.vue";
 import MoneyInput from "../Common/MoneyInput.vue";
 import { reactive, ref, computed } from "vue";
-import { useStore } from "vuex";
+import { usePayeeStore } from "../../common/stores/payeeStore";
+import { useCategoryStore } from "../../common/stores/categoryStore";
+import { useEntryUsersStore } from "../../common/stores/entryUsersStore";
 import { formatCurrency } from "@/utilities/money";
 import {
   addEntry,
@@ -127,17 +129,19 @@ export default {
     accountId: Number,
   },
   setup(props) {
-    const store = useStore();
+    const payeeStore = usePayeeStore();
+    const categoryStore = useCategoryStore();
+    const entryUsersStore = useEntryUsersStore();
     const state = reactive({
       bank_entry: props.bank_entry,
       entries: props.bank_entry.entries,
       original_payee_system_description: props.bank_entry.payee_name,
     });
     const editMode = ref("");
-    const entryUsers = computed(() => store.state.entryUsersStore.all);
-    const payees = computed(() => store.getters["payeeStore/sortedAll"]);
+    const entryUsers = computed(() => entryUsersStore.all);
+    const payees = computed(() => payeeStore.sortedAll);
     const categoriesOrganized = computed(
-      () => store.getters["categoryStore/organized"]
+      () => categoryStore.organized
     );
 
     //determine initial edit mdoe
@@ -174,7 +178,7 @@ export default {
           row.payee.payee_id = 0;
         }
         if (row.payee.payee_id > 0) {
-          row.payee.payee_system_description = store.state.payeeStore.all.find(
+          row.payee.payee_system_description = payeeStore.all.find(
             (x) => x.id === row.payee.payee_id
           )?.name;
         }
@@ -197,7 +201,7 @@ export default {
     const postEntry = async (row, accountId) => {
       //check if we need to create the payee
       if (row.payee.payee_id === 0) {
-        const newPayee = await store.dispatch("payeeStore/addPayee", {
+        const newPayee = await payeeStore.addPayee({
           ...row.payee,
         });
         row.payee.payee_id = newPayee.id;
@@ -241,7 +245,7 @@ export default {
       state.entries[0].payee = e;
 
       if (e.payee_id && e.payee_id > 0) {
-        var payee = store.state.payeeStore.all.find(
+        const payee = payeeStore.all.find(
           (x) => x.id === parseInt(e.payee_id)
         );
         state.entries[0].category = payee.default_category_id;
@@ -307,3 +311,4 @@ select option:disabled {
   color: black;
 }
 </style>
+

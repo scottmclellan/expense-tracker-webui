@@ -55,7 +55,8 @@ import ExpenseRowPayee from "./ExpenseRowPayee.vue";
 import ExpenseRowCategory from "./ExpenseRowCategory.vue";
 import MoneyInput from "../Common/MoneyInput.vue";
 import { reactive, ref, computed, watch } from "vue";
-import { useStore } from "vuex";
+import { usePayeeStore } from "../../common/stores/payeeStore";
+import { useCategoryStore } from "../../common/stores/categoryStore";
 import { formatCurrency } from "@/utilities/money";
 import { MODES } from "../common";
 
@@ -67,7 +68,8 @@ export default {
     index: Number,
   },
   setup(props, { emit }) {
-    const store = useStore();
+    const payeeStore = usePayeeStore();
+    const categoryStore = useCategoryStore();
 
     const state = reactive({
       bank_entry: props.bank_entry,
@@ -103,7 +105,7 @@ export default {
 
     const payeeUpdated = (e) => {
       state.entry.payee = e;
-      var payee = store.state.payeeStore.all.find(
+      const payee = payeeStore.all.find(
         (x) => x.id === parseInt(e.payee_id)
       );
       state.entry.category = payee.default_category_id;
@@ -118,7 +120,7 @@ export default {
       state,
       editMode,
       categoriesOrganized: computed(
-        () => store.getters["categoryStore/organized"]
+        () => categoryStore.organized
       ),
       formatCurrency,
       payeeUpdated,
@@ -137,3 +139,4 @@ select option:disabled {
   color: black;
 }
 </style>
+

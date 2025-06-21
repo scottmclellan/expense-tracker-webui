@@ -66,17 +66,17 @@
 import { getMonthText, currentMonth, currentYear, formatDate } from "../../utilities/date";
 import { formatCurrency } from "../../utilities/money";
 import { computed, onMounted, ref } from "vue";
-import { useStore } from "vuex";
+import { useMonthlySummaryStore } from "./monthlySummaryStore";
 
 export default {
   setup() {
-    const store = useStore();
+    const monthlySummaryStore = useMonthlySummaryStore();
 
     const loading = ref(true);
 
     onMounted(async () => {
       await LoadingData(() => {
-        store.dispatch("monthlySummaryStore/fetchMonthlySummary", {
+        monthlySummaryStore.fetchMonthlySummary({
           month: currentMonth,
           year: currentYear,
         });
@@ -92,20 +92,20 @@ export default {
 
     const categoryClicked = async (selectedCat) => {
      
-        store.dispatch("monthlySummaryStore/fetchCategoryDetails", {
+        monthlySummaryStore.fetchCategoryDetails({
           categoryId: selectedCat.id,
         });
       }
 
     const NextMonth = async () => {
       await LoadingData(() => {
-        store.dispatch("monthlySummaryStore/nextMonth");
+        monthlySummaryStore.nextMonth();
       });
     };
 
     const PreviousMonth = async () => {
       await LoadingData(() => {
-        store.dispatch("monthlySummaryStore/previousMonth");
+        monthlySummaryStore.previousMonth();
       });
     };
 
@@ -121,21 +121,21 @@ export default {
 
     return {
       loading,
-      totalSpent: computed(() => store.state.monthlySummaryStore.totalSpent),
-      categories: computed(() => store.state.monthlySummaryStore.all),
+      totalSpent: computed(() => monthlySummaryStore.totalSpent),
+      categories: computed(() => monthlySummaryStore.all),
       categoryDetails: computed(
-        () => store.state.monthlySummaryStore.categoryDetails
+        () => monthlySummaryStore.categoryDetails
       ),
       selectedCategoryId: computed(
-        () => store.state.monthlySummaryStore.selectedCategoryId
+        () => monthlySummaryStore.selectedCategoryId
       ),
       currentMonth: computed(
-        () => store.state.monthlySummaryStore.currentMonth
+        () => monthlySummaryStore.currentMonth
       ),
       currentMonthText: computed(() =>
-        getMonthText(store.state.monthlySummaryStore.currentMonth)
+        getMonthText(monthlySummaryStore.currentMonth)
       ),
-      currentYear: computed(() => store.state.monthlySummaryStore.currentYear),
+      currentYear: computed(() => monthlySummaryStore.currentYear),
       renderContent,
       categoryClicked,
       NextMonth,
@@ -165,3 +165,4 @@ export default {
   align-self: flex-end;
 }
 </style>
+

@@ -13,14 +13,14 @@
   </template>
   
   <script>
-  import { useStore} from 'vuex';
+  import { useLoginStore } from './loginStore';
   import {useRouter} from 'vue-router'
   import {ref} from 'vue'
 
 export default {
   name: 'LoginView',
   setup() {
-    const store = useStore();
+    const loginStore = useLoginStore();
     const email = ref('');
     const password = ref('');
     const router = useRouter();
@@ -29,7 +29,7 @@ export default {
 
     const login = async () => {
       try {
-        await store.dispatch('loginStore/login', {
+        await loginStore.login({
           email: email.value,
           password: password.value,
         });
