@@ -1,26 +1,14 @@
-import { fetchEntryUsers } from "@/utilities/fetch";
+import { defineStore } from 'pinia'
+import { fetchEntryUsers } from '@/utilities/fetch'
 
-
-export const entryUsersStore = {
-  namespaced: true,
-  state() {
-    return {
-      all: [],
-    };
-  }, 
-  mutations: {
-    setEntryUsers(state, entryUsers) {
-      state.all = entryUsers;
-    },
-    addEntryUser(state, entryUser) {
-      state.all.push(entryUser);
-    },
-  },
+export const useEntryUsersStore = defineStore('entryUsersStore', {
+  state: () => ({
+    all: []
+  }),
   actions: {
-    async fetchEntryUsers(ctx) {
-      const json = await fetchEntryUsers();
-
-      ctx.commit("setEntryUsers", json);
-    },
-  },
-};
+    async fetchEntryUsers() {
+      const json = await fetchEntryUsers()
+      this.all = json
+    }
+  }
+})

@@ -14,7 +14,7 @@
 
 <script>
 import { RouterLink, useRouter } from "vue-router";
-import { useStore } from "vuex";
+import { useLoginStore } from "./Login/loginStore";
 import { computed } from "vue";
 
 export default {
@@ -22,18 +22,18 @@ export default {
     RouterLink,
   },
   setup() {
-    const store = useStore();
+    const loginStore = useLoginStore();
     const router = useRouter();
 
     const logout = async ()=>{
-        await store.dispatch('loginStore/logout')
+        await loginStore.logout()
 
           // redirect to dashboard on successful logout
           router.push('/');
     }
 
     return {
-      loggedIn: computed(() => store.state.loginStore.loggedIn),
+      loggedIn: computed(() => loginStore.loggedIn),
       logout
     };
   },
@@ -66,3 +66,4 @@ nav a {
   text-decoration: none;
 }
 </style>
+
