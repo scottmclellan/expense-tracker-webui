@@ -26,7 +26,7 @@ export default {
     const store = useStore();
 
     const local = reactive({
-      entry_users: props.entry_users,
+      entry_users: props.entry_users.map(x=> x.id),
     });
 
     const entryUsers = computed(() => store.state.entryUsersStore.all);

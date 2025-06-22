@@ -10,7 +10,12 @@ const debounce = (fn, delay) => {
   };
 };
 
+function deepClone(obj) {
+  return JSON.parse(JSON.stringify(obj));
+}
+
 module.exports = {
     MODES,
-    debounce
+    debounce,
+    deepClone
   };

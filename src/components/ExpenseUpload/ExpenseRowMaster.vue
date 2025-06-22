@@ -1,6 +1,6 @@
 <template>
   <tr>
-    <td>{{ localRow.entry_date }}</td>
+    <td>{{ formatDate(localRow.entry_date) }}</td>
     <td>{{ localRow.payee.payee_bank_description }}</td>
     <td>
       <ExpenseRowPayee
@@ -13,7 +13,7 @@
       </div>
     </td>
     <td>
-      <div v-if="splitEntryRows.length === 0">
+      <div v-if="editMode === MODES.PRE_EDIT || splitEntryRows.length === 0">
         {{ formatCurrency(localRow.amount) }}
       </div>
       <MoneyInput v-else v-model="localRow.amount" />
@@ -27,7 +27,7 @@
       <div v-else>
         <label
           v-for="(entryUser, index) in entryUsers
-            .filter((x) => localRow.entry_users.includes(x.id))
+            .filter((x) => localRow.entry_users.find((y) => y.id === x.id))
             .map(
               (entry_user, index) =>
                 `${entry_user.first_name} ${entry_user.last_name}${
@@ -42,9 +42,13 @@
     </td>
     <td>
       <ExpenseRowCategory
+        v-if="editMode === MODES.ADD || editMode === MODES.EDIT"
         :category="localRow.category"
         @categoryChanged="categoryChanged"
       />
+      <div v-else>
+        <label>{{ categoryDescription }}</label>
+      </div>
     </td>
     <td>
       <el-button
@@ -87,15 +91,19 @@
     :accountId="accountId"
     :entry="entry"
     :bank_entry="localBankEntry"
+    :editMode="editMode"
     @changed="detailRowChanged"
     @deleteEntry="deleteDetailRow"
   />
-  <tr v-if="splitEntryRows && splitEntryRows.length > 0">
+  <tr
+    v-if="
+      splitEntryRows &&
+      splitEntryRows.length > 0 &&
+      (editMode === MODES.ADD || editMode === MODES.EDIT)
+    "
+  >
     <td colspan="7">
-      <el-button      
-        type="primary"
-        @click="addDetailRow"
-      >
+      <el-button type="primary" @click="addDetailRow">
         Add New Entry
       </el-button>
     </td>
@@ -111,6 +119,8 @@ import MoneyInput from "../Common/MoneyInput.vue";
 import { reactive, ref, computed } from "vue";
 import { useStore } from "vuex";
 import { formatCurrency } from "@/utilities/money";
+import { formatDate } from "@/utilities/date";
+import{MODES, deepClone} from "@/components/common"
 import {
   addEntry,
   addBankEntry,
@@ -118,8 +128,6 @@ import {
   updateEntry,
   clearEntryUsers,
 } from "../../utilities/api";
-
-const MODES = { PRE_EDIT: "preedit", EDIT: "edit", ADD: "add" };
 
 export default {
   props: {
@@ -133,12 +141,11 @@ export default {
       entries: props.bank_entry.entries,
       original_payee_system_description: props.bank_entry.payee_name,
     });
+
+    let originalState = deepClone(state);
     const editMode = ref("");
     const entryUsers = computed(() => store.state.entryUsersStore.all);
-    const payees = computed(() => store.getters["payeeStore/sortedAll"]);
-    const categoriesOrganized = computed(
-      () => store.getters["categoryStore/organized"]
-    );
+    const payees = computed(() => store.getters["payeeStore/sortedAll"]);    
 
     //determine initial edit mdoe
     if (state.bank_entry.bank_entry_id === 0) {
@@ -149,21 +156,20 @@ export default {
 
     //create expense entry
     const postExpense = async () => {
-      let bank_entry = state.bank_entry;
       //create bank_entry
       if (state.bank_entry.bank_entry_id === 0) {
-        bank_entry = await addBankEntry(
+        const bank_entry = await addBankEntry(
           bank_entry.account_id,
           bank_entry.entry_date,
           bank_entry.amount * -1,
           bank_entry.payee_name
         );
 
-        bank_entry.bank_entry_id = bank_entry.id;
+        state.bank_entry = { ...bank_entry, bank_entry_id: bank_entry.id };
       }
 
-      const postExpensePromises = state.entries.forEach(async (row) => {
-        row.bank_entry_id = bank_entry.id;
+      const postExpensePromises = state.entries.forEach(async (row, index) => {
+        row.bank_entry_id = state.bank_entry.id;
 
         //user changed the payee for the row
         if (
@@ -178,12 +184,15 @@ export default {
             (x) => x.id === row.payee.payee_id
           )?.name;
         }
-        state.entries[0] = await postEntry(row, bank_entry.account_id);
+
+        state.entries[index] = await postEntry(row, state.bank_entry.account_id);
         editMode.value = MODES.PRE_EDIT;
       });
 
       try {
         await Promise.all(postExpensePromises);
+
+        originalState = deepClone(state);
       } catch (error) {
         console.log(error);
       }
@@ -261,8 +270,15 @@ export default {
     const splitEntry = () => {
       addDetailRow();
     };
-    const cancelEdit = () => {
+    const cancelEdit = () => {      
       editMode.value = MODES.PRE_EDIT;
+      console.log(state.entries.length);
+      console.log(originalState.entries.length)
+      state.bank_entry = originalState.bank_entry;
+      state.entries = originalState.entries;
+      state.original_payee_system_description = originalState.original_payee_system_description;
+
+      console.log(state.entries.length);
     };
     const startEdit = () => {
       editMode.value = MODES.EDIT;
@@ -272,12 +288,21 @@ export default {
       payees,
       entryUsers,
       MODES,
+      originalState,
       localRow: computed(() => state.entries[0]),
       splitEntryRows: computed(() => state.entries.slice(1)),
       localBankEntry: computed(() => state.bank_entry),
       editMode,
-      categoriesOrganized,
+      categoryId: computed(() => state.entries[0].category_id),
+      categoryDescription: computed(() =>
+        state.entries[0].category_id > 0
+          ? store.getters["categoryStore/organized"].find(
+              (x) => x.id === state.entries[0].category_id
+            )?.description
+          : ""
+      ),
       formatCurrency,
+      formatDate,
       postExpense,
       updateExpense,
       entryUsersChanged,

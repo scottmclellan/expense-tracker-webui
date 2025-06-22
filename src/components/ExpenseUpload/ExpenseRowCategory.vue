@@ -41,4 +41,11 @@ export default {
 };
 </script>
 
-<style scoped></style>
+<style scoped>
+
+select option:disabled {
+  font-weight: 800;
+  color: black;
+}
+
+</style>

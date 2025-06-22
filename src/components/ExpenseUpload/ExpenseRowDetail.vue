@@ -5,30 +5,33 @@
     <td>
       <ExpenseRowPayee
         v-if="editMode === MODES.ADD || editMode === MODES.EDIT"
-        :payee="state.entry.payee"
+        :payee="localRow.payee"
         @payeeUpdated="payeeUpdated"
       />
       <div v-else>
-        {{ state.entry.payee.payee_system_description }}
+        {{ localRow.payee.payee_system_description }}
       </div>
     </td>
     <td>
-      <MoneyInput v-model="state.entry.amount" />
+      <div v-if="editMode === MODES.PRE_EDIT">
+        {{ formatCurrency(localRow.amount) }}
+      </div>
+      <MoneyInput v-else v-model="localRow.amount" />
     </td>
     <td>
       <ExpenseRowEntryUsers
         v-if="editMode === MODES.ADD || editMode === MODES.EDIT"
-        :entry_users="state.entry.entry_users"
+        :entry_users="localRow.entry_users"
         @entryUsersChanged="entryUsersChanged"
       />
       <div v-else>
         <label
           v-for="(entryUser, index) in entryUsers
-            .filter((x) => state.entry.entry_users.includes(x.id))
+            .filter((x) => localRow.entry_users.find((y) => y.id === x.id))
             .map(
               (entry_user, index) =>
                 `${entry_user.first_name} ${entry_user.last_name}${
-                  index === state.entry.entry_users.length - 1 ? '' : ', '
+                  index === localRow.entry_users.length - 1 ? '' : ', '
                 }`
             )"
           :key="index"
@@ -39,12 +42,16 @@
     </td>
     <td>
       <ExpenseRowCategory
-        :category="state.entry.category"
+      v-if="editMode === MODES.EDIT || editMode === MODES.ADD"
+        :category="localRow.category"
         @categoryChanged="categoryChanged"
       />     
+      <div v-else>
+        <label>{{ categoryDescription }}</label>
+      </div>
     </td>
     <td>
-      <el-button type="warning" @click="deleteEntry"> Delete </el-button>
+      <el-button v-if="editMode === MODES.EDIT || editMode === MODES.ADD" type="warning" @click="deleteEntry"> Delete </el-button>
     </td>
   </tr>
 </template>
@@ -54,7 +61,7 @@ import ExpenseRowEntryUsers from "./ExpenseRowEntryUsers.vue";
 import ExpenseRowPayee from "./ExpenseRowPayee.vue";
 import ExpenseRowCategory from "./ExpenseRowCategory.vue";
 import MoneyInput from "../Common/MoneyInput.vue";
-import { reactive, ref, computed, watch } from "vue";
+import { reactive, computed, watch } from "vue";
 import { useStore } from "vuex";
 import { formatCurrency } from "@/utilities/money";
 import { MODES } from "../common";
@@ -65,6 +72,7 @@ export default {
     entry: Object,
     accountId: Number,
     index: Number,
+    editMode: String,
   },
   setup(props, { emit }) {
     const store = useStore();
@@ -74,14 +82,8 @@ export default {
       entry: props.entry,
       original_payee_system_description: props.bank_entry.payee_name,
     });
-
-    const editMode = ref("");
-
-    if (state.bank_entry.bank_entry_id === 0) {
-      editMode.value = MODES.ADD;
-    } else {
-      editMode.value = MODES.PRE_EDIT;
-    }
+    
+    const entryUsers = computed(() => store.state.entryUsersStore.all);
 
     // Add a watcher for state.entry
     watch(
@@ -115,11 +117,15 @@ export default {
 
     return {
       MODES,
-      state,
-      editMode,
-      categoriesOrganized: computed(
-        () => store.getters["categoryStore/organized"]
+      localRow : computed(()=> state.entry),
+      categoryDescription: computed(() =>
+        state.entry.category_id > 0
+          ? store.getters["categoryStore/organized"].find(
+              (x) => x.id === state.entry.category_id
+            )?.description
+          : ""
       ),
+      entryUsers,
       formatCurrency,
       payeeUpdated,
       categoryChanged,
@@ -132,8 +138,6 @@ export default {
 </script>
 
 <style scoped>
-select option:disabled {
-  font-weight: 800;
-  color: black;
-}
+
+
 </style>

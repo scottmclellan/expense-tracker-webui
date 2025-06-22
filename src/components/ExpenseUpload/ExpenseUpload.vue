@@ -123,7 +123,16 @@ export default {
                 entry_date: entryResult.entry_date,
                 payee_name: entryResult.payee_name,
                 amount: entryResult.amount,
-                entries: entryResult.entries,
+                entries: entryResult.entries.map((entry) => {
+                  return {
+                    ...entry,
+                    payee: {
+                      payee_id: entry.payee.id,
+                      payee_system_description: entry.payee.name,
+                      payee_bank_description: payee,
+                    },
+                  };
+                }),
               };
             } else {
               const payeeResult = await checkExistingPayee(payee);
@@ -136,7 +145,7 @@ export default {
                 amount: amount,
                 entries: [
                   {
-                    entry_id: 0,                    
+                    entry_id: 0,
                     payee: {
                       payee_id: payeeResult.id ?? 0,
                       payee_system_description: payeeResult.name ?? payee,
