@@ -144,7 +144,7 @@ export default {
       () => categoryStore.organized
     );
 
-    //determine initial edit mdoe
+    //determine initial edit mode
     if (state.bank_entry.bank_entry_id === 0) {
       editMode.value = MODES.ADD;
     } else {
