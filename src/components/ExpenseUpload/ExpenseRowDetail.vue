@@ -61,9 +61,10 @@ import ExpenseRowEntryUsers from "./ExpenseRowEntryUsers.vue";
 import ExpenseRowPayee from "./ExpenseRowPayee.vue";
 import ExpenseRowCategory from "./ExpenseRowCategory.vue";
 import MoneyInput from "../Common/MoneyInput.vue";
-import { reactive, ref, computed, watch } from "vue";
+import { reactive, computed, watch, toRefs } from "vue";
 import { usePayeeStore } from "../../common/stores/payeeStore";
 import { useCategoryStore } from "../../common/stores/categoryStore";
+import { useEntryUsersStore } from "../../common/stores/entryUsersStore";
 import { formatCurrency } from "@/utilities/money";
 import { MODES } from "../common";
 
@@ -76,8 +77,10 @@ export default {
     editMode: String,
   },
   setup(props, { emit }) {
+    const { editMode } = toRefs(props)
     const payeeStore = usePayeeStore();
     const categoryStore = useCategoryStore();
+    const entryUsersStore = useEntryUsersStore();
 
     const state = reactive({
       bank_entry: props.bank_entry,
@@ -85,7 +88,7 @@ export default {
       original_payee_system_description: props.bank_entry.payee_name,
     });
     
-    const entryUsers = computed(() => store.state.entryUsersStore.all);
+    const entryUsers = computed(() => entryUsersStore.all);
 
     // Add a watcher for state.entry
     watch(
