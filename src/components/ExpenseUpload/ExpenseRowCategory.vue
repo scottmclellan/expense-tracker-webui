@@ -13,14 +13,14 @@
 
 <script>
 import { watch, computed, ref } from "vue";
-import { useStore } from "vuex";
+import { useCategoryStore } from "../../common/stores/categoryStore";
 
 export default {
   props: {
     category: Number,
   },
   setup(props, { emit }) {
-    const store = useStore();
+    const categoryStore = useCategoryStore();
 
     const selectedCategory = ref(props.category);
 
@@ -34,7 +34,7 @@ export default {
    
     return {
       selectedCategory,
-      categoriesOrganized: computed(() => store.getters["categoryStore/organized"]),
+      categoriesOrganized: computed(() => categoryStore.organized),
       categoryChanged,
     };
   },

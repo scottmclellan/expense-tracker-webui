@@ -19,14 +19,14 @@
 
 <script>
 import { reactive, ref, watch } from "vue";
-import { useStore } from "vuex";
+import { usePayeeStore } from "../../common/stores/payeeStore";
 
 export default {
   props: {
     payee: Object,
   },
   setup(props, { emit }) {
-    const store = useStore();
+    const payeeStore = usePayeeStore();
 
     const localPayee = reactive({ ...props.payee });
     const localPayeeDescription = ref(
@@ -38,13 +38,13 @@ export default {
     };
 
     const findPayee = (queryString) => {
-      return store.getters["payeeStore/sortedAll"].filter((payee) => {
+      return payeeStore.sortedAll.filter((payee) => {
         return payee.name.toLowerCase().includes(queryString.toLowerCase());
       });
     };
 
     const findPayeeExactMatch = (queryString) => {
-      return store.getters["payeeStore/sortedAll"].filter((payee) => {
+      return payeeStore.sortedAll.filter((payee) => {
         return payee.name.toLowerCase() === queryString.toLowerCase();
       });
     };
@@ -110,3 +110,4 @@ export default {
   color: darkgoldenrod;
 }
 </style>
+

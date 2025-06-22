@@ -42,7 +42,9 @@
 
 <script>
 import { ref, onMounted, watch } from "vue";
-import { useStore } from "vuex";
+import { usePayeeStore } from "../../common/stores/payeeStore";
+import { useCategoryStore } from "../../common/stores/categoryStore";
+import { useEntryUsersStore } from "../../common/stores/entryUsersStore";
 // import ExpenseRow from "./ExpenseRow.vue";
 import ExpenseRowMaster from "./ExpenseRowMaster.vue";
 import { fetchAccounts, fetchAccountUploadConfig } from "@/utilities/fetch";
@@ -54,7 +56,9 @@ export default {
     ExpenseRowMaster,
   },
   setup() {
-    const store = useStore();
+    const payeeStore = usePayeeStore();
+    const categoryStore = useCategoryStore();
+    const entryUsersStore = useEntryUsersStore();
     const accountId = ref(0);
     const bank_entries = ref([]);
     const accounts = ref([]);
@@ -168,9 +172,9 @@ export default {
 
     onMounted(async () => {
       accounts.value = await fetchAccounts();
-      await store.dispatch("payeeStore/fetchPayees");
-      await store.dispatch("categoryStore/fetchCategories");
-      await store.dispatch("entryUsersStore/fetchEntryUsers");
+      await payeeStore.fetchPayees();
+      await categoryStore.fetchCategories();
+      await entryUsersStore.fetchEntryUsers();
     });
 
     return {
@@ -184,3 +188,4 @@ export default {
   },
 };
 </script>
+

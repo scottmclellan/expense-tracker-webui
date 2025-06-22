@@ -61,8 +61,9 @@ import ExpenseRowEntryUsers from "./ExpenseRowEntryUsers.vue";
 import ExpenseRowPayee from "./ExpenseRowPayee.vue";
 import ExpenseRowCategory from "./ExpenseRowCategory.vue";
 import MoneyInput from "../Common/MoneyInput.vue";
-import { reactive, computed, watch } from "vue";
-import { useStore } from "vuex";
+import { reactive, ref, computed, watch } from "vue";
+import { usePayeeStore } from "../../common/stores/payeeStore";
+import { useCategoryStore } from "../../common/stores/categoryStore";
 import { formatCurrency } from "@/utilities/money";
 import { MODES } from "../common";
 
@@ -75,7 +76,8 @@ export default {
     editMode: String,
   },
   setup(props, { emit }) {
-    const store = useStore();
+    const payeeStore = usePayeeStore();
+    const categoryStore = useCategoryStore();
 
     const state = reactive({
       bank_entry: props.bank_entry,
@@ -105,7 +107,7 @@ export default {
 
     const payeeUpdated = (e) => {
       state.entry.payee = e;
-      var payee = store.state.payeeStore.all.find(
+      const payee = payeeStore.all.find(
         (x) => x.id === parseInt(e.payee_id)
       );
       state.entry.category = payee.default_category_id;
@@ -117,13 +119,10 @@ export default {
 
     return {
       MODES,
-      localRow : computed(()=> state.entry),
-      categoryDescription: computed(() =>
-        state.entry.category_id > 0
-          ? store.getters["categoryStore/organized"].find(
-              (x) => x.id === state.entry.category_id
-            )?.description
-          : ""
+      state,
+      editMode,
+      categoriesOrganized: computed(
+        () => categoryStore.organized
       ),
       entryUsers,
       formatCurrency,
@@ -141,3 +140,4 @@ export default {
 
 
 </style>
+

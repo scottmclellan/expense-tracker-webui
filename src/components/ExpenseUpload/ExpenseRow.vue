@@ -190,7 +190,9 @@
 
 <script>
 import { reactive, ref, computed } from "vue";
-import { useStore } from "vuex";
+import { usePayeeStore } from "../../common/stores/payeeStore";
+import { useCategoryStore } from "../../common/stores/categoryStore";
+import { useEntryUsersStore } from "../../common/stores/entryUsersStore";
 import { formatCurrency } from "@/utilities/money";
 import {
   addEntry,
@@ -207,7 +209,9 @@ export default {
     accountId: Number,
   },
   setup(props) {
-    const store = useStore();
+    const payeeStore = usePayeeStore();
+    const categoryStore = useCategoryStore();
+    const entryUsersStore = useEntryUsersStore();
 
     const state = reactive({
       bank_entry: props.bank_entry,
@@ -218,7 +222,7 @@ export default {
     const editMode = ref("");
     const isSplitEntry = ref(false);
 
-    const entryUsers = computed(() => store.state.entryUsersStore.all);
+    const entryUsers = computed(() => entryUsersStore.all);
     const headerRow = state.rows[0];
     const detailRows = state.rows;
 
@@ -239,7 +243,7 @@ export default {
       }
 
       if (row.payee_id > 0) {
-        row.payee_system_description = store.state.payeeStore.all.find(
+        row.payee_system_description = payeeStore.all.find(
           (x) => x.id === row.payee_id
         )?.name;
       }
@@ -256,7 +260,7 @@ export default {
     const postEntry = async (row, accountId) => {
       //check if we need to create the payee
       if (row.payee_id === 0) {
-        const newPayee = await store.dispatch("payeeStore/addPayee", {
+        const newPayee = await payeeStore.addPayee({
           ...row,
         });
 
@@ -297,7 +301,7 @@ export default {
     };
 
     const payeeSelected = (e) => {
-      var payee = store.state.payeeStore.all.find(
+      const payee = payeeStore.all.find(
         (x) => x.id === parseInt(e.target.value)
       );
       state.row.category = payee.default_category_id;
@@ -320,7 +324,7 @@ export default {
     };
 
     return {
-      payees: computed(() => store.getters["payeeStore/sortedAll"]),
+      payees: computed(() => payeeStore.sortedAll),
       MODES,
       headerRow,
       detailRows,
@@ -328,7 +332,7 @@ export default {
       isSplitEntry,
       entryUsers,
       categoriesOrganized: computed(
-        () => store.getters["categoryStore/organized"]
+        () => categoryStore.organized
       ),
       formatCurrency,
       postExpense,
@@ -356,3 +360,4 @@ tr:nth-child(odd) {
   background: #fff;
 }
 </style>
+

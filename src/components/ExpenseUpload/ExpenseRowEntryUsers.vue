@@ -16,20 +16,20 @@
 
 <script>
 import { reactive, computed } from "vue";
-import { useStore } from "vuex";
+import { useEntryUsersStore } from "../../common/stores/entryUsersStore";
 
 export default {
   props: {
     entry_users: Array,
   },
   setup(props, { emit }) {
-    const store = useStore();
+    const entryUsersStore = useEntryUsersStore();
 
     const local = reactive({
       entry_users: props.entry_users.map(x=> x.id),
     });
 
-    const entryUsers = computed(() => store.state.entryUsersStore.all);
+    const entryUsers = computed(() => entryUsersStore.all);
 
     const entryUserChanged = () => {
       emit("entryUsersChanged", { selected: local.entry_users });
@@ -60,3 +60,4 @@ export default {
 
 <style scoped>
 </style>
+

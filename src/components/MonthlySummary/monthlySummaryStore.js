@@ -1,96 +1,66 @@
-import { fetchMonthlySummary, fetchCategoryDetails } from "@/utilities/fetch";
+import { defineStore } from 'pinia'
+import { fetchMonthlySummary, fetchCategoryDetails } from '@/utilities/fetch'
 
-export const monthlySummaryStore = {
-  namespaced: true,
-  state() {
-    return {
-      all: [],
-      totalSpent: 0,
-      currentMonth: 0,
-      currentYear: 0,
-      selectedCategoryId: 0,
-      categoryDetails: [],
-    };
-  },
-  mutations: {
-    setSummary(state, summary) {
-      state.all = summary;
-      state.totalSpent = CalcTotalSpent(summary);
-      state.selectedCategoryId = 0;
-      state.categoryDetails = [];
-    },
-    setCurrentMonth(state, currentMonth) {
-      state.currentMonth = currentMonth;
-    },
-    setCurrentYear(state, currentYear) {
-      state.currentYear = currentYear;
-    },
-    setSelectedCategoryId(state, categoryId) {
-      console.log(categoryId);
-      state.selectedCategoryId = categoryId;
-    },
-    setCategoryDetails(state, categoryDetails) {
-      console.log(categoryDetails);
-      state.categoryDetails = categoryDetails;
-    },
-  },
+export const useMonthlySummaryStore = defineStore('monthlySummaryStore', {
+  state: () => ({
+    all: [],
+    totalSpent: 0,
+    currentMonth: 0,
+    currentYear: 0,
+    selectedCategoryId: 0,
+    categoryDetails: []
+  }),
   actions: {
-    async fetchMonthlySummary(ctx, { month, year }) {
-
-      const json = await fetchMonthlySummary(year, month+1);
-
-      ctx.commit("setSummary", json);
-      ctx.commit("setCurrentMonth", month);
-      ctx.commit("setCurrentYear", year);
+    async fetchMonthlySummary({ month, year }) {
+      const json = await fetchMonthlySummary(year, month + 1)
+      this.all = json
+      this.totalSpent = CalcTotalSpent(json)
+      this.selectedCategoryId = 0
+      this.categoryDetails = []
+      this.currentMonth = month
+      this.currentYear = year
     },
-    async fetchCategoryDetails(ctx, { categoryId }) {
-      const json = await fetchCategoryDetails(ctx.state.currentYear, ctx.state.currentMonth +1, categoryId);
-
-      if (!json) {
-        ctx.commit("setSelectedCategoryId", categoryId);
-        ctx.commit("setCategoryDetails", undefined);
-      } else {      
-        ctx.commit("setSelectedCategoryId", categoryId);
-        ctx.commit("setCategoryDetails", json);
+    async fetchCategoryDetails({ categoryId }) {
+      const json = await fetchCategoryDetails(
+        this.currentYear,
+        this.currentMonth + 1,
+        categoryId
+      )
+      this.selectedCategoryId = categoryId
+      this.categoryDetails = json || undefined
+    },
+    async nextMonth() {
+      let nextMonth = this.currentMonth + 1
+      if (nextMonth === 12) {
+        nextMonth = 0
+        this.currentYear += 1
       }
+      this.currentMonth = nextMonth
+      await this.fetchMonthlySummary({
+        month: this.currentMonth,
+        year: this.currentYear
+      })
     },
-    nextMonth(ctx) {
-      let nextMonth = ctx.state.currentMonth + 1
-      if(nextMonth === 12)
-      {
-        nextMonth = 0;
-        ctx.commit("setCurrentYear", ctx.state.currentYear+1)
+    async previousMonth() {
+      let prevMonth = this.currentMonth - 1
+      if (prevMonth === -1) {
+        prevMonth = 11
+        this.currentYear -= 1
       }
-      ctx.commit("setCurrentMonth", nextMonth);
-      ctx.dispatch("fetchMonthlySummary", {
-        month: ctx.state.currentMonth,
-        year: ctx.state.currentYear,
-      });
-    },
-    previousMonth(ctx) {
-      let prevMonth = ctx.state.currentMonth - 1
-      if(prevMonth === -1)
-      {
-        prevMonth = 11;
-        ctx.commit("setCurrentYear", ctx.state.currentYear-1)
-      }
-      ctx.commit("setCurrentMonth", prevMonth);
-      ctx.dispatch("fetchMonthlySummary", {
-        month: ctx.state.currentMonth,
-        year: ctx.state.currentYear,
-      });
-    },
-  },
-};
+      this.currentMonth = prevMonth
+      await this.fetchMonthlySummary({
+        month: this.currentMonth,
+        year: this.currentYear
+      })
+    }
+  }
+})
 
 function CalcTotalSpent(categories) {
-  let acc = 0;
-
+  let acc = 0
   for (let index = 0; index < categories.length; index++) {
-    const cat = categories[index];
-
-    acc += cat.amountSpent;
+    const cat = categories[index]
+    acc += cat.amountSpent
   }
-
-  return acc;
+  return acc
 }
